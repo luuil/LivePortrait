@@ -1,0 +1,27 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Stream Client</title>
+    <style>
+        .container {
+            display: flex;
+        }
+        video, img {
+            width: 640px;
+            height: 480px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Stream Client</h1>
+    <button id="startButton">Start</button>
+    <button id="stopButton">Stop</button>
+    <div class="container">
+        <video id="video" width="640" height="480" autoplay></video>
+        <img id="processed_video" width="640" height="480" alt="Processed Video" src="{{ url_for('static', filename='ins_demo.jpg') }}">
+    </div>
+    <script src="{{ url_for('static', filename='client.js') }}"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 from PIL import Image
 from typing import List, Tuple, Union
 from dataclasses import dataclass, field
+import onnxruntime
 
 from ..config.crop_config import CropConfig
 from .crop import (
@@ -60,10 +61,13 @@ class Cropper(object):
             except:
                     device = "cuda"
                     face_analysis_wrapper_provider = ["CUDAExecutionProvider"]
+        sess_options = onnxruntime.SessionOptions()
+        sess_options.enable_mem_pattern = False
         self.face_analysis_wrapper = FaceAnalysisDIY(
                     name="buffalo_l",
                     root=self.crop_cfg.insightface_root,
                     providers=face_analysis_wrapper_provider,
+                    sess_options=sess_options
                 )
         self.face_analysis_wrapper.prepare(ctx_id=device_id, det_size=(512, 512), det_thresh=self.crop_cfg.det_thresh)
         self.face_analysis_wrapper.warmup()

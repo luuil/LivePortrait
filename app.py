@@ -58,14 +58,20 @@ if args.gradio_temp_dir not in (None, ''):
 
 
 def gpu_wrapped_execute_video(*args, **kwargs):
+    print(f'args(length={len(args)}): {args}')
+    print(f'kwargs(length={len(kwargs)}): {kwargs}')
     return gradio_pipeline.execute_video(*args, **kwargs)
 
 
 def gpu_wrapped_execute_image_retargeting(*args, **kwargs):
+    print(f'args(length={len(args)}): {args}')
+    print(f'kwargs(length={len(kwargs)}): {kwargs}')
     return gradio_pipeline.execute_image_retargeting(*args, **kwargs)
 
 
 def gpu_wrapped_execute_video_retargeting(*args, **kwargs):
+    print(f'args(length={len(args)}): {args}')
+    print(f'kwargs(length={len(kwargs)}): {kwargs}')
     return gradio_pipeline.execute_video_retargeting(*args, **kwargs)
 
 
