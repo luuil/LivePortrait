@@ -64,7 +64,7 @@ def process(frame):
         flag_remap_input=True,
         flag_stitching_input=True,
         animation_region="all",
-        driving_option_input="pose-friendly",
+        driving_option_input="expression-friendly",
         driving_multiplier=1.0,
         flag_crop_driving_video_input=False,
         # flag_video_editing_head_rotation=False,
@@ -78,7 +78,7 @@ def process(frame):
         tab_selection="Image",
         v_tab_selection="Image"
     )
-    return cv2.imread(output_path, cv2.IMREAD_COLOR)
+    return cv2.imread(output_path_concat, cv2.IMREAD_COLOR)
 
 # warmup
 process(source_image)

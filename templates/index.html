@@ -7,10 +7,18 @@
     <style>
         .container {
             display: flex;
+            flex-direction: column; /* Change to column layout */
+            align-items: center;    /* Center the items */
         }
-        video, img {
+        video {
             width: 640px;
             height: 480px;
+            margin-bottom: 20px; /* Add some space between the video and processed video */
+        }
+        img {
+            width: 1280px;
+            height: 720px;
+            margin-bottom: 20px; /* Add some space between the video and processed video */
         }
     </style>
 </head>
@@ -20,7 +28,8 @@
     <button id="stopButton">Stop</button>
     <div class="container">
         <video id="video" width="640" height="480" autoplay></video>
-        <img id="processed_video" width="640" height="480" alt="Processed Video" src="{{ url_for('static', filename='ins_demo.jpg') }}">
+        <br />
+        <img id="processed_video" width="1280" height="720" alt="Processed Video" src="{{ url_for('static', filename='ins_demo.jpg') }}">
     </div>
     <script src="{{ url_for('static', filename='client.js') }}"></script>
 </body>
