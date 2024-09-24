@@ -1,4 +1,6 @@
 # app.py
+import sys
+sys.path.append('.')
 import os
 import os.path as osp
 import subprocess
@@ -13,6 +15,7 @@ from src.config.inference_config import InferenceConfig
 
 app = Flask(__name__)
 
+ROOT = os.path.dirname(__file__)
 
 def partial_fields(target_class, kwargs):
     return target_class(**{k: v for k, v in kwargs.items() if hasattr(target_class, k)})
@@ -48,8 +51,8 @@ flask_pipeline = FlaskPipeline(
     args=args
 )
 
-source_image = os.path.abspath(r'./static/ins_demo.jpg')
-temp_image = os.path.abspath(r'./frame_temp.jpg')
+source_image = os.path.join(ROOT, '../assets/examples/source/ins_demo.jpg')
+temp_image = os.path.join(ROOT, 'frame_temp.jpg')
 
 def process(frame):
     output_path, output_path_concat = flask_pipeline.execute_video(
