@@ -64,8 +64,8 @@ flask_pipeline = FlaskPipeline(
     args=args
 )
 
-source_image = os.path.abspath(r'../static/ins_demo.jpg')
-temp_image = os.path.abspath(r'./frame_temp.jpg')
+source_image = os.path.join(ROOT, '../assets/examples/source/ins_demo.jpg')
+temp_image = os.path.join(ROOT, 'frame_temp.jpg')
 
 def process(frame):
     output_path, output_path_concat = flask_pipeline.execute_video(
@@ -96,9 +96,6 @@ def process(frame):
     )
     return cv2.imread(output_path, cv2.IMREAD_COLOR)
 
-# warmup
-process(source_image)
-
 
 def stack_frame(image1: VideoFrame, image2: VideoFrame, stack=0) -> VideoFrame:
     img1 = image1.to_ndarray(format="bgr24")
@@ -106,6 +103,8 @@ def stack_frame(image1: VideoFrame, image2: VideoFrame, stack=0) -> VideoFrame:
 
     # 获取图片尺寸
     h, w, _ = img1.shape
+
+    img2 = cv2.resize(img2, (w, h))
 
     # 创建一个大小为(2w, 2h)的画布，初始化为白色
     canvas = np.ones((2*h, 2*w, 3), dtype=np.uint8) * 255
@@ -200,10 +199,10 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
-        elif self.transform == "emotion":
-            # add emotion
+        elif self.transform == "liveportrait":
+            # liveportrait
             img = frame.to_ndarray(format="bgr24")
-            cv2.imwrite(temp_image, frame)
+            cv2.imwrite(temp_image, img)
             img = process(temp_image)
 
             # rebuild a VideoFrame, preserving timing information
@@ -212,7 +211,7 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame.time_base = frame.time_base
         else:
             new_frame = frame
-        new_frame = stack_frame(frame, new_frame)
+        # new_frame = stack_frame(frame, new_frame)
         return new_frame
 
 
@@ -241,8 +240,8 @@ async def offer(request):
 
     # prepare local media
     player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
-    if args.record_to:
-        recorder = MediaRecorder(args.record_to)
+    if rtcargs.record_to:
+        recorder = MediaRecorder(rtcargs.record_to)
     else:
         recorder = MediaBlackhole()
 
@@ -273,7 +272,7 @@ async def offer(request):
                     relay.subscribe(track), transform=params["video_transform"]
                 )
             )
-            if args.record_to:
+            if rtcargs.record_to:
                 recorder.addTrack(relay.subscribe(track))
 
         @track.on("ended")
@@ -308,28 +307,33 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="WebRTC audio / video / data-channels demo"
     )
-    parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
-    parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
+    parser.add_argument("--cert-file", default=os.path.join(ROOT, "host.cert"), help="SSL certificate file (for HTTPS)")
+    parser.add_argument("--key-file", default=os.path.join(ROOT, "host.key"), help="SSL key file (for HTTPS)")
     parser.add_argument(
         "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
+        "--port", type=int, default=5000, help="Port for HTTP server (default: 5000)"
     )
     parser.add_argument("--record-to", help="Write received media to a file.")
     parser.add_argument("--verbose", "-v", action="count")
-    args = parser.parse_args()
+    rtcargs = parser.parse_args()
 
-    if args.verbose:
+    if rtcargs.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.cert_file:
+    logging.info(f'{rtcargs}')
+    if rtcargs.cert_file:
         ssl_context = ssl.SSLContext()
-        ssl_context.load_cert_chain(args.cert_file, args.key_file)
+        ssl_context.load_cert_chain(rtcargs.cert_file, rtcargs.key_file)
     else:
         ssl_context = None
+
+    # warmup emotion
+    logging.info(f'Warmup emtion')
+    process(source_image)
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
@@ -337,5 +341,5 @@ if __name__ == "__main__":
     app.router.add_get("/client.js", javascript)
     app.router.add_post("/offer", offer)
     web.run_app(
-        app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
+        app, access_log=None, host=rtcargs.host, port=rtcargs.port, ssl_context=ssl_context
     )
