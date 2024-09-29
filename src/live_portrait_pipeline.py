@@ -48,7 +48,7 @@ class LivePortraitPipeline(object):
             'c_lip_lst': [],
         }
 
-        for i in track(range(n_frames), description='Making motion templates...', total=n_frames):
+        for i in track(range(n_frames), description='Making motion templates...', total=n_frames, disable=True):
             # collect s, R, δ and t for inference
             I_i = I_lst[i]
             x_i_info = self.live_portrait_wrapper.get_kp_info(I_i)

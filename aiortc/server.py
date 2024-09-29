@@ -16,11 +16,13 @@ from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, Med
 from av import VideoFrame
 import numpy as np
 import tyro
+from PIL import Image
 
-from src.flask_pipeline import FlaskPipeline
+from src.talkinghead_pipeline import TalkingheadPipeline
 from src.config.crop_config import CropConfig
 from src.config.argument_config import ArgumentConfig
 from src.config.inference_config import InferenceConfig
+from src.utils.timer import Timer
 
 
 ROOT = os.path.dirname(__file__)
@@ -58,7 +60,7 @@ inference_cfg = partial_fields(InferenceConfig, args.__dict__)  # use attribute 
 crop_cfg = partial_fields(CropConfig, args.__dict__)  # use attribute of args to initial CropConfig
 # global_tab_selection = None
 
-flask_pipeline = FlaskPipeline(
+talkinghead_pipeline = TalkingheadPipeline(
     inference_cfg=inference_cfg,
     crop_cfg=crop_cfg,
     args=args
@@ -67,8 +69,10 @@ flask_pipeline = FlaskPipeline(
 source_image = os.path.join(ROOT, '../assets/examples/source/ins_demo.jpg')
 temp_image = os.path.join(ROOT, 'frame_temp.jpg')
 
-def process(frame):
-    output_path, output_path_concat = flask_pipeline.execute_video(
+source_image_pil = Image.open(source_image)
+
+def process(frame: str):
+    output_path, output_path_concat = talkinghead_pipeline.execute_video(
         input_source_image_path=source_image,
         input_source_video_path=None,
         input_driving_video_path=None,
@@ -80,7 +84,7 @@ def process(frame):
         flag_remap_input=True,
         flag_stitching_input=True,
         animation_region="all",
-        driving_option_input="expression-friendly",
+        driving_option_input="pos-friendly",
         driving_multiplier=1.0,
         flag_crop_driving_video_input=False,
         # flag_video_editing_head_rotation=False,
@@ -95,6 +99,30 @@ def process(frame):
         v_tab_selection="Image"
     )
     return cv2.imread(output_path, cv2.IMREAD_COLOR)
+
+def process_image(frame: Image.Image) -> Image.Image:
+    output, output_concat = talkinghead_pipeline.excute_frame(
+        input_source_image=source_image_pil,
+        input_driving_image=frame,
+        flag_normalize_lip=False,
+        flag_relative_input=True,
+        flag_do_crop_input=True,
+        flag_remap_input=True,
+        flag_stitching_input=True,
+        animation_region="all",
+        driving_option_input="pose-friendly",
+        driving_multiplier=1.0,
+        flag_crop_driving_video_input=False,
+        # flag_video_editing_head_rotation=False,
+        scale=2.3,
+        vx_ratio=0.0,
+        vy_ratio=-0.125,
+        scale_crop_driving_video=2.2,
+        vx_ratio_crop_driving_video=0.0,
+        vy_ratio_crop_driving_video=-0.1,
+        driving_smooth_observation_variance=3e-7
+    )
+    return Image.fromarray(output, mode="RGB")
 
 
 def stack_frame(image1: VideoFrame, image2: VideoFrame, stack=0) -> VideoFrame:
@@ -147,9 +175,10 @@ class VideoTransformTrack(MediaStreamTrack):
         super().__init__()  # don't forget this!
         self.track = track
         self.transform = transform
+        self.timer = Timer()
 
     async def recv(self):
-        frame = await self.track.recv()
+        frame: VideoFrame = await self.track.recv()
 
         if self.transform == "cartoon":
             img = frame.to_ndarray(format="bgr24")
@@ -203,15 +232,32 @@ class VideoTransformTrack(MediaStreamTrack):
             # liveportrait
             img = frame.to_ndarray(format="bgr24")
             cv2.imwrite(temp_image, img)
+
+            self.timer.tic()
             img = process(temp_image)
+            elapse = self.timer.toc()
+            logging.info(f"liveportrait animating time: {elapse*1000:.03f}ms")
 
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
+        elif self.transform == "liveportrait_fast":
+            # liveportrait
+            img = frame.to_image()
+
+            self.timer.tic()
+            img = process_image(img)
+            elapse = self.timer.toc()
+            logging.info(f"liveportrait animating time: {elapse*1000:.03f}ms")
+
+            # rebuild a VideoFrame, preserving timing information
+            new_frame = VideoFrame.from_image(img)
+            new_frame.pts = frame.pts
+            new_frame.time_base = frame.time_base
         else:
             new_frame = frame
-        # new_frame = stack_frame(frame, new_frame)
+        new_frame = stack_frame(frame, new_frame)
         return new_frame
 
 
@@ -333,7 +379,7 @@ if __name__ == "__main__":
 
     # warmup emotion
     logging.info(f'Warmup emtion')
-    process(source_image)
+    process_image(source_image_pil)
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)

@@ -87,7 +87,7 @@ def concat_frames(driving_image_lst, source_image_lst, I_p_lst):
     h, w, _ = I_p_lst[0].shape
     source_image_resized_lst = [cv2.resize(img, (w, h)) for img in source_image_lst]
 
-    for idx, _ in track(enumerate(I_p_lst), total=len(I_p_lst), description='Concatenating result...'):
+    for idx, _ in track(enumerate(I_p_lst), total=len(I_p_lst), description='Concatenating result...', disable=True):
         I_p = I_p_lst[idx]
         source_image_resized = source_image_resized_lst[idx] if len(source_image_lst) > 1 else source_image_resized_lst[0]
 

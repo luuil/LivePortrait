@@ -8,7 +8,7 @@ import tyro
 from flask import Flask, Response, render_template, request
 import cv2
 import numpy as np
-from src.flask_pipeline import FlaskPipeline
+from talkinghead_pipeline import TalkingheadPipeline
 from src.config.crop_config import CropConfig
 from src.config.argument_config import ArgumentConfig
 from src.config.inference_config import InferenceConfig
@@ -45,7 +45,7 @@ inference_cfg = partial_fields(InferenceConfig, args.__dict__)  # use attribute 
 crop_cfg = partial_fields(CropConfig, args.__dict__)  # use attribute of args to initial CropConfig
 # global_tab_selection = None
 
-flask_pipeline = FlaskPipeline(
+talkinghead_pipeline = TalkingheadPipeline(
     inference_cfg=inference_cfg,
     crop_cfg=crop_cfg,
     args=args
@@ -55,7 +55,7 @@ source_image = os.path.join(ROOT, '../assets/examples/source/ins_demo.jpg')
 temp_image = os.path.join(ROOT, 'frame_temp.jpg')
 
 def process(frame):
-    output_path, output_path_concat = flask_pipeline.execute_video(
+    output_path, output_path_concat = talkinghead_pipeline.execute_video(
         input_source_image_path=source_image,
         input_source_video_path=None,
         input_driving_video_path=None,

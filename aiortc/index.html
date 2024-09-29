@@ -23,7 +23,7 @@
     }
 
     #media {
-        max-width: 1280px;
+        max-width: 100%;
     }
 
     .videoContainer {
@@ -73,6 +73,7 @@
     </select>
     <select id="video-resolution">
         <option value="" selected>Default resolution</option>
+        <option value="256x256">256x256</option>
         <option value="320x240">320x240</option>
         <option value="640x480">640x480</option>
         <option value="960x540">960x540</option>
@@ -83,7 +84,8 @@
         <option value="edges">Edge detection</option>
         <option value="cartoon">Cartoon effect</option>
         <option value="rotate">Rotate</option>
-        <option value="liveportrait" selected>Live Portrait</option>
+        <option value="liveportrait">Live Portrait</option>
+        <option value="liveportrait_fast" selected>Fast Live Portrait</option>
     </select>
     <select id="video-codec">
         <option value="default">Default codecs</option>
@@ -106,11 +108,11 @@
     <div class="videoContainer">
         <video id="local-video" autoplay="true" playsinline="true"></video>
     </div>
+    <div class="clearfix"></div>
     <div class="videoContainer">
         <video id="video" autoplay="true" playsinline="true"></video>
     </div>
 </div>
-
 <div class="clearfix"></div>
 
 <h2>State</h2>
